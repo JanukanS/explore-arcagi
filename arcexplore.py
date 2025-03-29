@@ -89,6 +89,12 @@ class Task:
             v2.display(f"{self.id} Test[{i}]")
             plt.show()
 
+    def data_iter(self):
+        for ind, tgp in enumerate(self.train):
+            yield (self.id, 'train', ind, tgp)
+        for ind, tgp in enumerate(self.test):
+            yield (self.id, 'test', ind, tgp)
+
 @dataclass
 class TaskSet:
     label: str
@@ -122,6 +128,15 @@ class TaskSet:
         tab_nest.titles = ('Training', 'Evaluation')
         return tab_nest
 
+    def data_iter(self):
+        for _,tgp in self.training.items():
+            for case in tgp.data_iter():
+                yield (self.label, 'training') + case
+        for _,tgp in self.evaluation.items():
+            for case in tgp.data_iter():
+                yield (self.label, 'evaluation') + case
+
+
 class ARCSet(UserDict):
     @classmethod
     def from_links(cls, link_dict):
@@ -141,6 +156,10 @@ class ARCSet(UserDict):
         tab_nest.children = [i.display() for _, i in self.items()]
         tab_nest.titles = [k for k in self.keys()]
         display(tab_nest)
+
+    def data_iter(self):
+        for _, v in self.items():
+            yield from v.data_iter()
 
 ARC_LINKS = {'ARC-AGI-1': "https://github.com/fchollet/ARC-AGI/archive/refs/heads/master.zip",
              'ARC-AGI-2': "https://github.com/arcprize/ARC-AGI-2/archive/refs/heads/main.zip"}
